@@ -265,36 +265,36 @@ export default function DashboardScreen() {
               )}
             </View>
 
-            {/* PANEL 4: PREGUNTA TERAPÉUTICA */}
-            <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>🔮 Pregunta Terapéutica</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.textPrimary, borderColor: colors.cardBorder }]}
-                placeholder="Escribe tu inquietud (Ej: ¿Tengo un amor secreto?)"
-                placeholderTextColor={colors.textSecondary}
-                value={preguntaTexto}
-                onChangeText={setPreguntaTexto}
-                multiline
-              />
-              <Text style={[styles.labelInput, { color: colors.textSecondary }]}>Selecciona 3 cartas para la auditoría:</Text>
-              <ModuloSlots cartas={cartas.terapeutica} colors={colors} onSelectSlot={(idx) => abrirSelectorSlot('terapeutica', idx)} />
-              <TouchableOpacity style={[styles.btnModulo, { backgroundColor: colors.accent }]} onPress={() => procesarModulo('terapeutica')} disabled={loadingModulo === 'terapeutica'}>
-                {loadingModulo === 'terapeutica' ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnModuloText}>Procesar Pregunta Terapéutica</Text>}
-              </TouchableOpacity>
-              
-              {resultados.terapeutica && (
-                <TarjetaResultadoCard
-                  titulo="Respuesta & Veredicto IA"
-                  contenido={
-                    typeof resultados.terapeutica === 'string'
-                      ? resultados.terapeutica
-                      : resultados.terapeutica.pregunta_reflexion || resultados.terapeutica.resumen || JSON.stringify(resultados.terapeutica)
-                  }
-                  colors={colors}
-                />
-              )}
-            </View>
-          </>
+            {/* PANEL 4: PREGUNTA TERAPÉUTICA (CONSULTA ABIERTA) */}
+<View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>🔮 Pregunta Terapéutica & Consulta Abierta</Text>
+  <TextInput
+    style={[styles.input, { backgroundColor: colors.bg, color: colors.textPrimary, borderColor: colors.cardBorder }]}
+    placeholder="Escribe tu inquietud abierta (Ej: ¿Qué debo aprender de este bloqueo laboral y cómo abordarlo?)"
+    placeholderTextColor={colors.textSecondary}
+    value={preguntaTexto}
+    onChangeText={setPreguntaTexto}
+    multiline
+  />
+  <Text style={[styles.labelInput, { color: colors.textSecondary }]}>Selecciona 3 cartas para la orientación terapéutica:</Text>
+  <ModuloSlots cartas={cartas.terapeutica} colors={colors} onSelectSlot={(idx) => abrirSelectorSlot('terapeutica', idx)} />
+  <TouchableOpacity style={[styles.btnModulo, { backgroundColor: colors.accent }]} onPress={() => procesarModulo('terapeutica')} disabled={loadingModulo === 'terapeutica'}>
+    {loadingModulo === 'terapeutica' ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnModuloText}>Procesar Orientación Terapéutica</Text>}
+  </TouchableOpacity>
+  
+  {resultados.terapeutica && (
+    <TarjetaResultadoCard
+      titulo="Orientación Terapéutica IA"
+      contenido={
+        typeof resultados.terapeutica === 'string'
+          ? resultados.terapeutica
+          : resultados.terapeutica.pregunta_reflexion || resultados.terapeutica.resumen || JSON.stringify(resultados.terapeutica)
+      }
+      colors={colors}
+    />
+  )}
+</View>       
+</>
         ) : (
           /* HISTÓRICO CON CALENDARIO */
           <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
