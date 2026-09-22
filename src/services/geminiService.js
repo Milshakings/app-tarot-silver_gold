@@ -1,12 +1,12 @@
 // src/services/geminiService.js
 
-// Clave de API leída desde las variables de entorno de Expo/Vercel
+// Clave de API leída desde las variables de entorno de Expo / Vercel
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 /**
- * Módulo de Fallback Local
- * Genera análisis analíticos dinámicos cuando la API no está disponible o falla.
+ * Módulo de Fallback Local Dinámico
+ * Se activa si no hay API Key o si la llamada a Gemini falla.
  */
 function generarLecturaMock(payload) {
   const { tipo, cartas, pregunta } = payload;
@@ -37,13 +37,25 @@ function generarLecturaMock(payload) {
       };
 
     case 'terapeutica': {
-      const pregLimpia = pregunta && pregunta.trim() !== '' ? pregunta : 'Tu inquietud planteada';
+      const pregLimpia = pregunta && pregunta.trim() !== '' ? pregunta.trim() : 'tu consulta general';
+      
+      // Múltiples perspectivas dinámicas para garantizar variabilidad en el fallback local
+      const enfoques = [
+        `Respecto a "${pregLimpia}", el mapa simbólico encabezado por ${c1} señala la necesidad de revisar tus supuestos iniciales. La interacción de ${c2} advierte sobre resistencias del entorno o inseguridades internas, mientras que la salida con ${c3} sugiere tomar una postura proactiva alineada con tus prioridades reales.`,
+        
+        `Al consultar sobre "${pregLimpia}", los arcanos marcan un punto de inflexión. ${c1} representa el motor del cambio que ya se ha activado. Sin embargo, ${c2} te pide hacer una pausa estratégica para no actuar desde el impulso. Finalmente, ${c3} indica que la claridad llegará mediante la observación consciente.`,
+        
+        `Frente a la inquietud "${pregLimpia}", la energía de ${c1} te invita a desapegarte de expectativas rígidas. La presencia central de ${c2} pone el foco en fortalecer tu autoconfianza, y ${c3} proyecta una resolución favorable siempre que mantengas la coherencia con tus valores.`
+      ];
+
+      // Selección dinámica basada en el texto para evitar respuestas duplicadas
+      const indice = (pregLimpia.length + c1.length) % enfoques.length;
+
       return {
-        pregunta_reflexion: `Análisis Terapéutico sobre "${pregLimpia}":\n\n` +
-          `• Lectura e Integración de Arcanos (${c1}, ${c2}, ${c3}):\n` +
-          `Las cartas señalan una dinámica de transformación activa. La presencia de ${c1} invita a examinar la causa origen, mientras que ${c2} refleja el desafío central a trabajar en el presente. Por su parte, ${c3} proyecta la integración necesaria para avanzar de forma consciente.\n\n` +
-          `• Orientación de Phronesis:\n` +
-          `Observa qué aspectos de esta situación puedes gestionar directamente y cuáles requieren aceptación. La clave reside en mantener la claridad de tus valores sin precipitar conclusiones.`
+        pregunta_reflexion: `🔮 Orientación Terapéutica sobre: "${pregLimpia}"\n\n` +
+          `✨ Arcanos Guía: ${c1} • ${c2} • ${c3}\n\n` +
+          `${enfoques[indice]}\n\n` +
+          `💡 Pregunta de reflexión: ¿Qué pequeño paso concreto puedes dar hoy respecto a esta situación sin buscar el control absoluto del resultado?`
       };
     }
 
@@ -56,12 +68,10 @@ function generarLecturaMock(payload) {
 
 /**
  * Función Principal: Procesar Lectura de Tarot con Gemini REST API
- * @param {Object} payload - Contiene tipo ('sensacion'|'gratitud'|'triptico'|'terapeutica'), cartas y pregunta opcional.
  */
 export async function procesarLecturaTarot(payload) {
   const { tipo, cartas, pregunta } = payload;
 
-  // Si no hay API Key configurada, se recurre directamente al fallback local
   if (!API_KEY) {
     console.warn('⚠️ EXPO_PUBLIC_GEMINI_API_KEY no detectada. Generando respuesta local...');
     return generarLecturaMock(payload);
@@ -117,17 +127,18 @@ export async function procesarLecturaTarot(payload) {
     case 'terapeutica':
       prompt = `
         Actúa como terapeuta transpersonal, mentor de introspección y analista de tarot.
-        El usuario plantea la siguiente PREGUNTA ABIERTA O INQUIETUD: "${pregunta || 'Consulta de orientación general'}".
-        Las 3 cartas seleccionadas como guía son: ${JSON.stringify(cartas)}.
+        El usuario plantea la siguiente PREGUNTA ABIERTA O INQUIETUD ESPECÍFICA: "${pregunta || 'Consulta de orientación general'}".
+        Las 3 cartas seleccionadas como guía en orden son: ${JSON.stringify(cartas)}.
 
-        Entrega una respuesta analítica, empática y abierta (SIN limitar a SÍ/NO). 
-        Estructura la respuesta de forma clara abarcando:
-        1. Análisis integrado de los 3 arcanos en relación a la pregunta planteada.
-        2. Reflexión o consejo terapéutico práctico para la toma de decisiones.
+        INSTRUCCIÓN OBLIGATORIA: Genera una interpretación 100% ÚNICA, PERSONALIZADA Y ESPECÍFICA para la pregunta "${pregunta}". NO uses respuestas genéricas ni repetitivas.
 
-        Responde ÚNICAMENTE un objeto JSON válido con el formato:
+        Estructura la respuesta abarcando:
+        1. Análisis directo de cómo los 3 arcanos seleccionados responden e interaccionan con la pregunta planteada.
+        2. Una reflexión terapéutica práctica y una orientación concreta para la toma de decisiones.
+
+        Responde ÚNICAMENTE un objeto JSON válido con el formato exacto:
         {
-          "pregunta_reflexion": "Texto completo del análisis e integración terapéutica"
+          "pregunta_reflexion": "Texto completo, detallado y personalizado de la orientación terapéutica"
         }
       `;
       break;
@@ -149,7 +160,7 @@ export async function procesarLecturaTarot(payload) {
           }
         ],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.85, // Incrementado para asegurar variabilidad y respuestas únicas
           responseMimeType: 'application/json'
         }
       })
@@ -166,7 +177,6 @@ export async function procesarLecturaTarot(payload) {
       throw new Error('Estructura de respuesta inválida desde Gemini API');
     }
 
-    // Limpieza de formato Markdown si el modelo retorna etiquetas ```json
     const cleanJsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsedData = JSON.parse(cleanJsonText);
 
