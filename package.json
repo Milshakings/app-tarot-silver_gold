@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
     "@google/genai": "^2.24.0",
+    "@google/generative-ai": "^0.24.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.24",
     "expo-status-bar": "~57.0.1",
@@ -14,12 +15,12 @@
     "react-native-safe-area-context": "^5.10.0",
     "react-native-web": "^0.21.2"
   },
-"scripts": {
-  "start": "expo start",
-  "android": "expo start --android",
-  "ios": "expo start --ios",
-  "web": "expo start --web",
-  "build:web": "npx expo export -p web"
-},
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build:web": "npx expo export -p web"
+  },
   "private": true
 }
