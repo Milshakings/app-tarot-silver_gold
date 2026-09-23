@@ -22,7 +22,17 @@ const ARCANOS_MAYORES = [
   'El Diablo', 'La Torre', 'La Estrella', 'La Luna', 'El Sol', 'El Juicio', 'El Mundo'
 ];
 
-export default function DashboardScreen({ colors }) {
+export default function DashboardScreen(props) {
+  // Paleta por defecto protegida por si props.colors llega undefined
+  const colors = props.colors || {
+    bg: '#0F0E17',
+    cardBg: '#1F1B24',
+    cardBorder: '#332940',
+    textPrimary: '#FFFFFE',
+    textSecondary: '#A7A9BE',
+    accent: '#FF8906',
+  };
+
   // Estado para la selección de cartas de los 4 módulos
   const [cartas, setCartas] = useState({
     sensacion: [null, null, null],
@@ -42,9 +52,9 @@ export default function DashboardScreen({ colors }) {
 
   // Estado del Modal de Selección de Carta
   const [modalVisible, setModalVisible] = useState(false);
-  const [slotActivo, setSlotActivo] = useState(null); // { modulo: 'sensacion', index: 0 }
+  const [slotActivo, setSlotActivo] = useState(null);
 
-  // Función para abrir el modal de selección de carta
+  // Función para abrir el modal de selección
   const abrirSelector = (modulo, index) => {
     setSlotActivo({ modulo, index });
     setModalVisible(true);
@@ -70,12 +80,20 @@ export default function DashboardScreen({ colors }) {
     const cartasSeleccionadas = cartas[modulo];
 
     if (cartasSeleccionadas.some((c) => !c)) {
-      Alert.alert('Atención', 'Por favor selecciona las 3 cartas para este módulo antes de procesar.');
+      if (typeof window !== 'undefined') {
+        window.alert('Por favor selecciona las 3 cartas para este módulo antes de procesar.');
+      } else {
+        Alert.alert('Atención', 'Por favor selecciona las 3 cartas para este módulo antes de procesar.');
+      }
       return;
     }
 
     if (modulo === 'terapeutica' && (!preguntaTexto || preguntaTexto.trim() === '')) {
-      Alert.alert('Atención', 'Por favor ingresa tu pregunta abierta antes de procesar.');
+      if (typeof window !== 'undefined') {
+        window.alert('Por favor ingresa tu pregunta abierta antes de procesar.');
+      } else {
+        Alert.alert('Atención', 'Por favor ingresa tu pregunta abierta antes de procesar.');
+      }
       return;
     }
 
@@ -96,13 +114,12 @@ export default function DashboardScreen({ colors }) {
       }));
     } catch (err) {
       console.error(`Error procesando módulo ${modulo}:`, err);
-      Alert.alert('Error', 'No se pudo generar la lectura. Intenta nuevamente.');
     } finally {
       setLoadingModulo(null);
     }
   };
 
-  // Subcomponente para los 3 slots de cartas de cada módulo
+  // Subcomponente para los 3 slots de cartas
   const renderSlots = (modulo) => (
     <View style={styles.slotsRow}>
       {[0, 1, 2].map((idx) => {
@@ -229,7 +246,7 @@ export default function DashboardScreen({ colors }) {
 
       {/* MÓDULO 3: TRÍPTICO EVOLUTIVO */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>⏳ Tríptico Temporal (Pasado - Presente - Futuro)</Text>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>⏳ Tríptico Temporal</Text>
         {renderSlots('triptico')}
         <TouchableOpacity
           style={[styles.btnModulo, { backgroundColor: colors.accent }]}
@@ -279,7 +296,7 @@ export default function DashboardScreen({ colors }) {
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>🔮 Pregunta Terapéutica & Consulta Abierta</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.bg, color: colors.textPrimary, borderColor: colors.cardBorder }]}
-          placeholder="Escribe tu inquietud abierta (Ej: ¿Qué debo aprender de este bloqueo laboral y cómo abordarlo?)"
+          placeholder="Escribe tu inquietud abierta..."
           placeholderTextColor={colors.textSecondary}
           value={preguntaTexto}
           onChangeText={setPreguntaTexto}
@@ -384,7 +401,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 12,
     minHeight: 60,
-    textAlignVertical: 'top',
   },
   btnModulo: {
     borderRadius: 8,
