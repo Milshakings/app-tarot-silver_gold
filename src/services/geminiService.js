@@ -39,7 +39,6 @@ function generarLecturaMock(payload) {
     case 'terapeutica': {
       const pregLimpia = pregunta && pregunta.trim() !== '' ? pregunta.trim() : 'tu consulta general';
       
-      // Múltiples perspectivas dinámicas para garantizar variabilidad en el fallback local
       const enfoques = [
         `Respecto a "${pregLimpia}", el mapa simbólico encabezado por ${c1} señala la necesidad de revisar tus supuestos iniciales. La interacción de ${c2} advierte sobre resistencias del entorno o inseguridades internas, mientras que la salida con ${c3} sugiere tomar una postura proactiva alineada con tus prioridades reales.`,
         
@@ -48,14 +47,13 @@ function generarLecturaMock(payload) {
         `Frente a la inquietud "${pregLimpia}", la energía de ${c1} te invita a desapegarte de expectativas rígidas. La presencia central de ${c2} pone el foco en fortalecer tu autoconfianza, y ${c3} proyecta una resolución favorable siempre que mantengas la coherencia con tus valores.`
       ];
 
-      // Selección dinámica basada en el texto para evitar respuestas duplicadas
       const indice = (pregLimpia.length + c1.length) % enfoques.length;
 
       return {
-        pregunta_reflexion: `🔮 Orientación Terapéutica sobre: "${pregLimpia}"\n\n` +
-          `✨ Arcanos Guía: ${c1} • ${c2} • ${c3}\n\n` +
+        pregunta_reflexion: ` Orientación Terapéutica sobre: "${pregLimpia}"\n\n` +
+          ` Arcanos Guía: ${c1} • ${c2} • ${c3}\n\n` +
           `${enfoques[indice]}\n\n` +
-          `💡 Pregunta de reflexión: ¿Qué pequeño paso concreto puedes dar hoy respecto a esta situación sin buscar el control absoluto del resultado?`
+          ` Pregunta de reflexión: ¿Qué pequeño paso concreto puedes dar hoy respecto a esta situación sin buscar el control absoluto del resultado?`
       };
     }
 
@@ -85,7 +83,7 @@ export async function procesarLecturaTarot(payload) {
         Actúa como un experto analista de tarot y consultor de bienestar transpersonal.
         Analiza las siguientes 3 cartas seleccionadas: ${JSON.stringify(cartas)}.
         Proporciona un diagnóstico breve sobre el estado emocional o mental.
-        Responde ÚNICAMENTE un objeto JSON válido con este formato:
+        Responde ÚNICAMENTE un objeto JSON válido con este formato exacto:
         {
           "sensacion_general": "Breve descripción de la energía o sensación global",
           "mecanismos_cuidado": "Consejo práctico para el autocuidado diario",
@@ -99,7 +97,7 @@ export async function procesarLecturaTarot(payload) {
         Actúa como mentor de desarrollo personal y tarotista reflexivo.
         Analiza las siguientes 3 cartas seleccionadas: ${JSON.stringify(cartas)}.
         Enfoca la lectura hacia la gratitud y la apreciación consciente.
-        Responde ÚNICAMENTE un objeto JSON válido con este formato:
+        Responde ÚNICAMENTE un objeto JSON válido con este formato exacto:
         {
           "reconocimiento": "Aspecto o logro a agradecer según las cartas",
           "aprendizaje": "Lección valiosa extraída de la combinación",
@@ -115,7 +113,7 @@ export async function procesarLecturaTarot(payload) {
         Carta 1 = Pasado / Antecedentes.
         Carta 2 = Presente / Situación Actual.
         Carta 3 = Futuro / Tendencia.
-        Responde ÚNICAMENTE un objeto JSON válido con este formato:
+        Responde ÚNICAMENTE un objeto JSON válido con este formato exacto:
         {
           "pasado": "Análisis del origen o antecedentes",
           "presente": "Análisis del estado actual y desafíos",
@@ -160,7 +158,7 @@ export async function procesarLecturaTarot(payload) {
           }
         ],
         generationConfig: {
-          temperature: 0.85, // Incrementado para asegurar variabilidad y respuestas únicas
+          temperature: 0.85,
           responseMimeType: 'application/json'
         }
       })
