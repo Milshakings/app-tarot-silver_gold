@@ -52,7 +52,11 @@ export default function DashboardScreen(props) {
   const [cartas, setCartas] = useState({
     sensacion: [null, null, null],
     gratitud: [null, null, null],
-    triptico: [null, null, null],
+    triptico: {
+      amor: [null, null],
+      dinero: [null, null],
+      salud: [null, null],
+    },
     terapeutica: [null, null, null],
   });
 
@@ -60,21 +64,33 @@ export default function DashboardScreen(props) {
   const [resultados, setResultados] = useState({});
   const [loadingModulo, setLoadingModulo] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [slotActivo, setSlotActivo] = useState(null);
+  const [slotActivo, setSlotActivo] = useState(null); // { modulo, subcategoria, index }
 
-  const abrirSelector = (modulo, index) => {
-    setSlotActivo({ modulo, index });
+  const abrirSelector = (modulo, index, subcategoria = null) => {
+    setSlotActivo({ modulo, index, subcategoria });
     setModalVisible(true);
   };
 
   const seleccionarCarta = (nombreCarta) => {
     if (!slotActivo) return;
-    const { modulo, index } = slotActivo;
+    const { modulo, index, subcategoria } = slotActivo;
 
     setCartas((prev) => {
-      const nuevasCartasModulo = [...prev[modulo]];
-      nuevasCartasModulo[index] = nombreCarta;
-      return { ...prev, [modulo]: nuevasCartasModulo };
+      if (modulo === 'triptico') {
+        const nuevasSub = [...prev.triptico[subcategoria]];
+        nuevasSub[index] = nombreCarta;
+        return {
+          ...prev,
+          triptico: {
+            ...prev.triptico,
+            [subcategoria]: nuevasSub,
+          },
+        };
+      } else {
+        const nuevasCartasModulo = [...prev[modulo]];
+        nuevasCartasModulo[index] = nombreCarta;
+        return { ...prev, [modulo]: nuevasCartasModulo };
+      }
     });
 
     setModalVisible(false);
@@ -82,13 +98,22 @@ export default function DashboardScreen(props) {
   };
 
   const procesarModulo = async (modulo) => {
-    const cartasSeleccionadas = cartas[modulo];
-
-    if (cartasSeleccionadas.some((c) => !c)) {
-      const msj = 'Por favor selecciona las 3 cartas para este módulo antes de procesar.';
-      if (typeof window !== 'undefined') window.alert(msj);
-      else Alert.alert('Atención', msj);
-      return;
+    if (modulo === 'triptico') {
+      const { amor, dinero, salud } = cartas.triptico;
+      if (amor.some((c) => !c) || dinero.some((c) => !c) || salud.some((c) => !c)) {
+        const msj = 'Por favor selecciona las 2 cartas para Amor, 2 para Dinero y 2 para Salud antes de procesar.';
+        if (typeof window !== 'undefined') window.alert(msj);
+        else Alert.alert('Atención', msj);
+        return;
+      }
+    } else {
+      const cartasSeleccionadas = cartas[modulo];
+      if (cartasSeleccionadas.some((c) => !c)) {
+        const msj = 'Por favor selecciona las 3 cartas para este módulo antes de procesar.';
+        if (typeof window !== 'undefined') window.alert(msj);
+        else Alert.alert('Atención', msj);
+        return;
+      }
     }
 
     if (modulo === 'terapeutica' && (!preguntaTexto || preguntaTexto.trim() === '')) {
@@ -103,7 +128,7 @@ export default function DashboardScreen(props) {
     try {
       const payload = {
         tipo: modulo,
-        cartas: cartasSeleccionadas,
+        cartas: modulo === 'triptico' ? cartas.triptico : cartas[modulo],
         pregunta: modulo === 'terapeutica' ? preguntaTexto : undefined,
       };
 
@@ -116,7 +141,7 @@ export default function DashboardScreen(props) {
     }
   };
 
-  const renderSlots = (modulo) => (
+  const renderSlots3 = (modulo) => (
     <View style={styles.slotsRow}>
       {[0, 1, 2].map((idx) => {
         const carta = cartas[modulo][idx];
@@ -135,12 +160,34 @@ export default function DashboardScreen(props) {
     </View>
   );
 
+  const renderSlotsTriptico = (subcategoria, titulo) => (
+    <View style={styles.subSeccionTriptico}>
+      <Text style={[styles.subTituloTriptico, { color: colors.textSecondary }]}>{titulo}</Text>
+      <View style={styles.slotsRow}>
+        {[0, 1].map((idx) => {
+          const carta = cartas.triptico[subcategoria][idx];
+          return (
+            <TouchableOpacity
+              key={idx}
+              style={[styles.slot, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+              onPress={() => abrirSelector('triptico', idx, subcategoria)}
+            >
+              <Text style={[styles.slotTexto, { color: carta ? colors.accent : colors.textSecondary }]}>
+                {carta || `Carta ${idx + 1}`}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.bg }]}>
       {/* MÓDULO 1: SENSACIONES DIARIAS */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>✨ Sensaciones Diarias</Text>
-        {renderSlots('sensacion')}
+        {renderSlots3('sensacion')}
         <TouchableOpacity
           style={[styles.btnModulo, { backgroundColor: colors.accent }]}
           onPress={() => procesarModulo('sensacion')}
@@ -151,12 +198,8 @@ export default function DashboardScreen(props) {
 
         {resultados.sensacion && (
           <View style={[styles.cardResultado, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.tituloResultado, { color: colors.accent }]}>✨ Análisis en Conjunto</Text>
-            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>
-              {typeof resultados.sensacion === 'string'
-                ? resultados.sensacion
-                : resultados.sensacion.analisis_conjunto || resultados.sensacion.resumen || JSON.stringify(resultados.sensacion)}
-            </Text>
+            <Text style={[styles.tituloResultado, { color: colors.accent }]}>✨ Interpretación Completa</Text>
+            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>{resultados.sensacion}</Text>
           </View>
         )}
       </View>
@@ -164,7 +207,7 @@ export default function DashboardScreen(props) {
       {/* MÓDULO 2: GRATITUD DIARIA */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>🌱 Gratitud Diaria</Text>
-        {renderSlots('gratitud')}
+        {renderSlots3('gratitud')}
         <TouchableOpacity
           style={[styles.btnModulo, { backgroundColor: colors.accent }]}
           onPress={() => procesarModulo('gratitud')}
@@ -175,36 +218,32 @@ export default function DashboardScreen(props) {
 
         {resultados.gratitud && (
           <View style={[styles.cardResultado, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.tituloResultado, { color: colors.accent }]}>🌱 Análisis de Gratitud Integrado</Text>
-            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>
-              {typeof resultados.gratitud === 'string'
-                ? resultados.gratitud
-                : resultados.gratitud.analisis_conjunto || resultados.gratitud.resumen || JSON.stringify(resultados.gratitud)}
-            </Text>
+            <Text style={[styles.tituloResultado, { color: colors.accent }]}>🌱 Lectura de Gratitud</Text>
+            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>{resultados.gratitud}</Text>
           </View>
         )}
       </View>
 
-      {/* MÓDULO 3: TRÍPTICO EVOLUTIVO */}
+      {/* MÓDULO 3: TRÍPTICO DE CONSEJOS (AMOR, DINERO, SALUD) */}
       <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>⏳ Tríptico Temporal</Text>
-        {renderSlots('triptico')}
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>⏳ Tríptico de Consejos</Text>
+        
+        {renderSlotsTriptico('amor', '❤️ Amor (2 Cartas)')}
+        {renderSlotsTriptico('dinero', '💰 Dinero y Trabajo (2 Cartas)')}
+        {renderSlotsTriptico('salud', '🌿 Salud y Bienestar (2 Cartas)')}
+
         <TouchableOpacity
-          style={[styles.btnModulo, { backgroundColor: colors.accent }]}
+          style={[styles.btnModulo, { backgroundColor: colors.accent, marginTop: 8 }]}
           onPress={() => procesarModulo('triptico')}
           disabled={loadingModulo === 'triptico'}
         >
-          {loadingModulo === 'triptico' ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnModuloText}>Procesar Tríptico</Text>}
+          {loadingModulo === 'triptico' ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnModuloText}>Procesar Consejos del Tríptico</Text>}
         </TouchableOpacity>
 
         {resultados.triptico && (
           <View style={[styles.cardResultado, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.tituloResultado, { color: colors.accent }]}>⏳ Síntesis Evolutiva en Conjunto</Text>
-            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>
-              {typeof resultados.triptico === 'string'
-                ? resultados.triptico
-                : resultados.triptico.analisis_conjunto || resultados.triptico.resumen || JSON.stringify(resultados.triptico)}
-            </Text>
+            <Text style={[styles.tituloResultado, { color: colors.accent }]}>⏳ Consejos del Tríptico</Text>
+            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>{resultados.triptico}</Text>
           </View>
         )}
       </View>
@@ -220,7 +259,7 @@ export default function DashboardScreen(props) {
           onChangeText={setPreguntaTexto}
           multiline
         />
-        {renderSlots('terapeutica')}
+        {renderSlots3('terapeutica')}
         <TouchableOpacity
           style={[styles.btnModulo, { backgroundColor: colors.accent }]}
           onPress={() => procesarModulo('terapeutica')}
@@ -231,17 +270,13 @@ export default function DashboardScreen(props) {
 
         {resultados.terapeutica && (
           <View style={[styles.cardResultado, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.tituloResultado, { color: colors.accent }]}>🔮 Orientación Holística Integrada</Text>
-            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>
-              {typeof resultados.terapeutica === 'string'
-                ? resultados.terapeutica
-                : resultados.terapeutica.analisis_conjunto || resultados.terapeutica.resumen || JSON.stringify(resultados.terapeutica)}
-            </Text>
+            <Text style={[styles.tituloResultado, { color: colors.accent }]}>🔮 Orientación Holística</Text>
+            <Text style={[styles.textoResultado, { color: colors.textPrimary }]}>{resultados.terapeutica}</Text>
           </View>
         )}
       </View>
 
-      {/* MODAL DE SELECCIÓN DE LAS 78 CARTAS */}
+      {/* MODAL DE SELECCIÓN DE BARAJA DE 78 CARTAS */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: colors.cardBg }]}>
@@ -275,8 +310,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
   card: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 20 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
-  slotsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  slot: { flex: 1, height: 50, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4, paddingHorizontal: 4 },
+  subSeccionTriptico: { marginBottom: 12 },
+  subTituloTriptico: { fontSize: 14, fontWeight: 'bold', marginBottom: 6 },
+  slotsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  slot: { flex: 1, height: 48, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4, paddingHorizontal: 4 },
   slotTexto: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   input: { borderRadius: 8, borderWidth: 1, padding: 10, marginBottom: 12, minHeight: 60 },
   btnModulo: { borderRadius: 8, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
